@@ -22,7 +22,7 @@ app.innerHTML = `
 <div class="meter-pair meter-in"><div class="meter-stack"><div class="meter"><i id="inL"></i></div><div class="meter"><i id="inR"></i></div></div><output id="inputReadout">-60.0 dB<small>LEVEL IN</small></output></div>
 <div class="meter-pair meter-out"><div class="meter-stack"><div class="meter"><i id="outL"></i></div><div class="meter"><i id="outR"></i></div></div><output id="outputReadout">-60.0 dB<small>LEVEL OUT</small></output></div></section>
 <section class="panel center-panel"><span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="screw s4"></span>
-<div class="gr-display"><div class="grid"></div><div class="gr-title" id="signalTitle">GAIN REDUCTION</div><div class="gr-value" id="grValue">0.0 dB</div><div class="needle" id="needle"></div><div class="needle-value" id="needleValue">0.0 dB</div></div>
+<div class="gr-display"><div class="grid"></div><div class="gr-title" id="signalTitle">GAIN REDUCTION</div><div class="gr-value" id="grValue">0.0 dB</div><div class="vu-meters" id="vuMeters"></div></div>
 <div class="top-knobs"><div class="control"><label>THRESHOLD</label><div class="knob" id="thresholdKnob"><span></span></div><output id="thresholdValue">0.0 dB</output></div><div class="control"><label>KNEE</label><div class="knob" id="kneeKnob"><span></span></div><output id="kneeValue">50 %</output></div></div>
 <div class="bottom-controls"><div class="control large"><label>GAIN</label><div class="knob" id="gainKnob"><span></span></div><output id="gainValue">+0.0 dB</output></div><div class="signal-control"><label>SIGNAL</label><div class="signal-switch toggle-multi" id="signalSwitch"><span></span></div><output id="signalValue">GR</output></div><div class="control large"><label>OUTPUT</label><div class="knob" id="outputKnob"><span></span></div><output id="outputValue">+0.0 dB</output></div></div></section>
 <section class="panel right-panel"><span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="screw s4"></span>
@@ -44,7 +44,55 @@ function setKnob(el, value, min, max, output, formatter) {
 function updateMultiToggle(selector, value, max) {
   const el = typeof selector === 'string' ? document.querySelector(selector) : selector
   if (!el) return
-  el.querySelector('span').style.left = `${(value / max) * 100}%`
+  const track = Math.max(0, el.clientWidth - 19)
+  const x = max > 0 ? (value / max) * track : 0
+  el.querySelector('span').style.left = `${x}px`
+}
+
+const meterScale = ['+3', '0', '-5', '-10', '-20']
+const meterCountForSignal = () => state.signal === 1 ? (state.mode === 2 ? 3 : state.mode === 1 ? 2 : 1) : 1
+
+function buildVUMeters() {
+  const container = $('vuMeters')
+  const count = meterCountForSignal()
+  const labels = state.signal === 1
+    ? (state.mode === 2 ? ['LOW', 'MID', 'HIGH'] : state.mode === 1 ? ['MID', 'SIDE'] : ['GR'])
+    : [state.signal === 0 ? 'INPUT' : 'OUTPUT']
+  container.innerHTML = Array.from({ length: count }, (_, index) => `
+    <div class="vu-meter" data-index="${index}">
+      <div class="vu-scale">${meterScale.map(v => `<span>${v}</span>`).join('')}</div>
+      <div class="vu-face">
+        <div class="vu-ticks"></div>
+        <div class="vu-needle" id="vuNeedle${index}"></div>
+        <div class="vu-center"></div>
+      </div>
+      <div class="vu-label">${labels[index]}</div>
+      <output id="vuReadout${index}">0.0 dB</output>
+    </div>`).join('')
+}
+
+function valueForMeter(index) {
+  if (state.signal === 0) return state.inputDb
+  if (state.signal === 2) return state.outputDb
+  const base = Math.abs(Math.min(0, state.grDb))
+  if (state.mode === 1) return index === 0 ? -base : -base * 0.82
+  if (state.mode === 2) return index === 0 ? -base * 0.7 : index === 1 ? -base : -base * 0.86
+  return -base
+}
+
+function renderVUMeters() {
+  const count = meterCountForSignal()
+  if ($('vuMeters').children.length !== count) buildVUMeters()
+  for (let i = 0; i < count; i++) {
+    const value = valueForMeter(i)
+    const db = Math.max(-20, Math.min(3, value))
+    const p = (db + 20) / 23
+    const angle = -55 + p * 110
+    const needle = $(`vuNeedle${i}`)
+    const readout = $(`vuReadout${i}`)
+    if (needle) needle.style.transform = `rotate(${angle}deg)`
+    if (readout) readout.textContent = `${db.toFixed(1)} dB`
+  }
 }
 
 function render() {
@@ -69,11 +117,8 @@ function render() {
 
   const value = state.grDb <= -0.01 ? state.grDb : 0
   $('grValue').textContent = `${value.toFixed(1)} dB`
-  $('needleValue').textContent = `${value.toFixed(1)} dB`
-  const amount = Math.max(0, Math.min(20, Math.abs(value)))
-  const angle = -55 + amount * 5
-  $('needle').style.transform = `rotate(${angle}deg)`
-  $('needleValue').style.setProperty('--needle-angle', `${angle * -1}deg`)
+  buildVUMeters()
+  renderVUMeters()
 
   updateMultiToggle('[data-key="style"]', state.style, 2)
   updateMultiToggle('[data-key="mode"]', state.mode, 2)
