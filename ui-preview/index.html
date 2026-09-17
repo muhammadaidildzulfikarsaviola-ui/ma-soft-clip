@@ -4,9 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Soft Clip UI Preview</title>
+
+    <style>
+      body {
+        margin: 0;
+        background: #222;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+
+      #debug {
+        padding: 20px;
+        font-size: 18px;
+        white-space: pre-wrap;
+      }
+    </style>
   </head>
+
   <body>
+    <div id="debug">HTML LOADED<br>Waiting for JavaScript...</div>
+
     <div id="app"></div>
+
+    <script>
+      window.onerror = function(message, source, line, column, error) {
+        document.getElementById("debug").textContent =
+          "JAVASCRIPT ERROR\n\n" +
+          message +
+          "\n\nSource: " +
+          source +
+          "\nLine: " +
+          line +
+          "\nColumn: " +
+          column;
+      };
+
+      window.addEventListener("unhandledrejection", function(event) {
+        document.getElementById("debug").textContent =
+          "PROMISE ERROR\n\n" +
+          event.reason;
+      });
+    </script>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

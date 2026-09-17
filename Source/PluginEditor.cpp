@@ -3,7 +3,7 @@
 
 namespace
 {
-    constexpr const char* devUiUrl = "http://localhost:5173";
+    constexpr const char* devUiUrl = "http://localhost:5173/";
 
     juce::var makeUiState (SoftClipAudioProcessor& processor)
     {
@@ -40,18 +40,7 @@ namespace
 SoftClipAudioProcessorEditor::SoftClipAudioProcessorEditor (SoftClipAudioProcessor& p)
     : AudioProcessorEditor (&p),
       audioProcessor (p),
-      webView (juce::WebBrowserComponent::Options()
-          .withBackend (juce::WebBrowserComponent::Options::Backend::webview2)
-          .withNativeIntegrationEnabled (true)
-          .withEventListener ("uiReady", [this] (const juce::var&)
-          {
-              pageReady = true;
-              sendStateToUi();
-          })
-          .withEventListener ("setParameter", [this] (const juce::var& event)
-          {
-              handleUiEvent (event);
-          }))
+      webView (juce::WebBrowserComponent::Options())
 {
     setSize (1024, 576);
     addAndMakeVisible (webView);
