@@ -7,8 +7,7 @@
 #include "Meter/LevelMeter.h"
 #include "Meter/AnalogMeter.h"
 
-
-class SoftClipAudioProcessorEditor  : public juce::AudioProcessorEditor,
+class SoftClipAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer
 {
 public:
@@ -24,32 +23,39 @@ private:
     SoftClipAudioProcessor& audioProcessor;
     IndustrialLookAndFeel industrialLaf;
 
-    // Meters Realtime
+    // Realtime meters
     Meter::LevelMeter inputMeterL, inputMeterR;
     Meter::LevelMeter outputMeterL, outputMeterR;
     Meter::AnalogMeter analogVuMeter;
 
-    // Sliders / Knobs
+    // Main controls
     juce::Slider inputGainKnob;
     juce::Slider outputGainKnob;
     juce::Slider thresholdKnob;
     juce::Slider kneeKnob;
 
-    // Step/Mode Switches (Clipper Style, Mode, Oversampling, Signal Select)
+    // Step / mode controls
     juce::Slider styleSlider;
     juce::Slider modeSlider;
     juce::Slider oversampleSlider;
     juce::Slider signalSelectSlider;
 
-    // Bypass Toggle
     juce::ToggleButton clipperBypassToggle;
 
-    // Labels
+    // Parameter name labels
     juce::Label inputGainLabel, outputGainLabel, thresholdLabel, kneeLabel;
     juce::Label styleLabel, modeLabel, oversampleLabel, signalSelectLabel;
+
+    // Live parameter value labels
+    juce::Label inputGainValueLabel, outputGainValueLabel;
+    juce::Label thresholdValueLabel, kneeValueLabel;
+    juce::Label styleValueLabel, modeValueLabel, oversampleValueLabel;
+    juce::Label signalSelectValueLabel, clipperStateLabel;
+
+    // Live meter readouts
     juce::Label inputReadoutLabel, outputReadoutLabel;
 
-    // APVTS Attachments
+    // APVTS attachments
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputGainAttach;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outputGainAttach;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> thresholdAttach;
