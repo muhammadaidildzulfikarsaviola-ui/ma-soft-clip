@@ -89,7 +89,7 @@ function render() {
   $('osValue').textContent = osNames[state.oversampling] ?? '1x'
   $('signalValue').textContent = signalNames[state.signal] ?? 'GR'
   $('clipperToggle').classList.toggle('on', state.clipper)
-  $('clipperToggle em').textContent = state.clipper ? 'ON' : 'OFF'
+  document.querySelector('#clipperToggle em').textContent = state.clipper ? 'ON' : 'OFF'
 
   const inputPercent = Math.max(0, Math.min(100, ((state.inputDb + 60) / 60) * 100))
   const outputPercent = Math.max(0, Math.min(100, ((state.outputDb + 60) / 60) * 100))
