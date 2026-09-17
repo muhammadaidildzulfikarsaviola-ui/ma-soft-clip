@@ -29,7 +29,7 @@ app.innerHTML = `
 <div class="choice-control"><label>CLIPPER STYLE</label><div class="toggle-control toggle-multi" data-key="style"><span></span></div><output id="styleValue">SOFT</output></div>
 <div class="choice-control"><label>MODE</label><div class="toggle-control toggle-multi" data-key="mode"><span></span></div><output id="modeValue">STEREO</output></div>
 <div class="choice-control"><label>OVERSAMPLING</label><div class="toggle-control toggle-multi" data-key="oversampling"><span></span></div><output id="osValue">1x</output></div></section>
-<section class="panel clipper-panel"><span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="s4"></span><button id="clipperToggle" class="toggle on"><span></span><b>CLIPPER</b><em>ON</em></button></section>
+<section class="panel clipper-panel"><button id="clipperToggle" class="toggle on"><span></span><b>CLIPPER</b><em>ON</em></button></section>
 <footer><span>WADIDAW AUDIO TOOLS</span><strong>CLEAN LOUDER TOGETHER</strong><span>EST. 2025</span></footer></main>`
 
 const $ = id => document.getElementById(id)
@@ -67,12 +67,13 @@ let meterSignature = ''
 
 function buildVUMeters() {
   const container = $('vuMeters')
+  if (!container) return
   const count = meterCountForSignal()
   const labels = state.signal === 1
-    ? (state.mode === 2 ? ['LOW', 'MID', 'HIGH'] : state.mode === 1 ? ['MID', 'SIDE'] : ['GR'])
+    ? (state.mode === 2 ? ['LOW', 'MID', 'HIGH'] : state.mode === 1 ? ['MID', 'SIDE'] : ['STEREO'])
     : [state.signal === 0 ? 'INPUT' : 'OUTPUT']
   const signature = `${state.signal}:${state.mode}:${count}:${labels.join('|')}`
-  if (signature === meterSignature) return
+  if (signature === meterSignature && container.children.length === count) return
   meterSignature = signature
   container.innerHTML = Array.from({ length: count }, (_, index) => `
     <div class="vu-meter" data-index="${index}">
@@ -102,7 +103,7 @@ function renderVUMeters() {
     const value = valueForMeter(i)
     const db = Math.max(-20, Math.min(3, value))
     const p = (db + 20) / 23
-    const angle = -55 + p * 110
+    const angle = -58 + p * 116
     const needle = $(`vuNeedle${i}`)
     const readout = $(`vuReadout${i}`)
     if (needle) needle.style.transform = `rotate(${angle}deg)`
