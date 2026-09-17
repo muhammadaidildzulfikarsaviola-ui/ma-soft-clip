@@ -29,7 +29,7 @@ app.innerHTML = `
 <div class="choice-control"><label>CLIPPER STYLE</label><div class="toggle-control toggle-multi" data-key="style"><span></span></div><output id="styleValue">SOFT</output></div>
 <div class="choice-control"><label>MODE</label><div class="toggle-control toggle-multi" data-key="mode"><span></span></div><output id="modeValue">STEREO</output></div>
 <div class="choice-control"><label>OVERSAMPLING</label><div class="toggle-control toggle-multi" data-key="oversampling"><span></span></div><output id="osValue">1x</output></div></section>
-<section class="panel clipper-panel"><span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="screw s4"></span><button id="clipperToggle" class="toggle on"><span></span><b>CLIPPER</b><em>ON</em></button></section>
+<section class="panel clipper-panel"><span class="screw s1"></span><span class="screw s2"></span><span class="screw s3"></span><span class="s4"></span><button id="clipperToggle" class="toggle on"><span></span><b>CLIPPER</b><em>ON</em></button></section>
 <footer><span>WADIDAW AUDIO TOOLS</span><strong>CLEAN LOUDER TOGETHER</strong><span>EST. 2025</span></footer></main>`
 
 const $ = id => document.getElementById(id)
@@ -44,18 +44,21 @@ function setKnob(el, value, min, max, output, formatter) {
 function updateMultiToggle(selector, value, max) {
   const el = typeof selector === 'string' ? document.querySelector(selector) : selector
   if (!el) return
-  const track = Math.max(0, el.clientWidth - 19)
-  const x = max > 0 ? (value / max) * track : 0
-  el.querySelector('span').style.left = `${x}px`
+  const p = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0
+  el.style.setProperty('--toggle-position', p)
+  const thumb = el.querySelector('span')
+  if (thumb) thumb.style.left = `calc(10px + ${p * 100}% - ${p * 20}px)`
 }
 
 function updateSignalToggle(value) {
   const el = $('signalSwitch')
   if (!el) return
-  const track = Math.max(0, el.clientHeight - 18)
-  const y = (Math.max(0, Math.min(2, value)) / 2) * track
-  el.querySelector('span').style.left = '50%'
-  el.querySelector('span').style.top = `${4 + y}px`
+  const p = Math.max(0, Math.min(1, value / 2))
+  const thumb = el.querySelector('span')
+  if (thumb) {
+    thumb.style.left = '50%'
+    thumb.style.top = `calc(4px + ${p * 100}% - ${p * 18}px)`
+  }
 }
 
 const meterScale = ['+3', '0', '-5', '-10', '-20']
