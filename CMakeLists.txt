@@ -41,22 +41,22 @@ juce_add_plugin(SoftClip
     PRODUCT_NAME "Soft Clip"
     PLUGIN_NAME "Soft Clip"
     VERSION "1.0.0"
-    
+
     BUNDLE_ID com.wadidaw.audiotools.softclip
     PLUGIN_MANUFACTURER_CODE Wdid
     PLUGIN_CODE SfCl
-    
+
     DESCRIPTION "Soft clipping and harmonic processing."
     VST3_CATEGORIES "Fx Distortion"
-    
+
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
-    
+
     FORMATS ${PLUGIN_FORMATS}
     COPY_PLUGIN_AFTER_BUILD TRUE
-    
+
     VST3_CAN_REPLACE_VST2 FALSE
 
     SOURCES
@@ -64,14 +64,11 @@ juce_add_plugin(SoftClip
         Source/PluginEditor.cpp
         Source/DSP/SoftClip.cpp
         Source/DSP/Clipper.cpp
-        Source/DSP/OverSamplingEngine.cpp
+        Source/DSP/Oversampling.cpp
         Source/Meter/LevelMeter.cpp
         Source/Meter/AnalogMeter.cpp
 )
 
-# ============================================================
-# TARGET CONFIGURATION
-# ============================================================
 target_include_directories(SoftClip PRIVATE
     Source
     Source/DSP
@@ -89,19 +86,4 @@ target_link_libraries(SoftClip PRIVATE
 
 target_compile_definitions(SoftClip PRIVATE
     JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
-)
-
-target_include_directories(SoftClip PRIVATE
-    Source
-    Source/DSP
-    Source/Meter
-    Source/Utils
-)
-
-target_link_libraries(SoftClip PRIVATE
-    juce::juce_audio_utils
-    juce::juce_dsp
-    juce::juce_recommended_config_flags
-    juce::juce_recommended_lto_flags
-    juce::juce_recommended_warning_flags
 )
