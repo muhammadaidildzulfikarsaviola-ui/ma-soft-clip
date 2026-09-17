@@ -5,6 +5,26 @@ namespace
 {
     constexpr const char* devUiUrl = "http://localhost:5173/";
 
+    juce::WebBrowserComponent::Options makeWebViewOptions()
+    {
+        auto options = juce::WebBrowserComponent::Options()
+            .withBackend (juce::WebBrowserComponent::Options::Backend::webview2)
+            .withNativeIntegrationEnabled (true)
+            .withWinWebView2Options (
+                juce::WebBrowserComponent::Options::WinWebView2()
+                    .withUserDataFolder (
+                        juce::File::getSpecialLocation (
+                            juce::File::tempDirectory
+                        ).getChildFile ("SoftClipWebView2")
+                    )
+            );
+
+        DBG ("Soft Clip: WebView2 options supported = "
+             << juce::WebBrowserComponent::areOptionsSupported (options));
+
+        return options;
+    }
+
     juce::var makeUiState (SoftClipAudioProcessor& processor)
     {
         auto& apvts = processor.getAPVTS();
@@ -40,10 +60,31 @@ namespace
 SoftClipAudioProcessorEditor::SoftClipAudioProcessorEditor (SoftClipAudioProcessor& p)
     : AudioProcessorEditor (&p),
       audioProcessor (p),
-      webView (juce::WebBrowserComponent::Options())
+      webView (makeWebViewOptions()
+          .withEventListener ("uiReady", [this] (const juce::var&)
+          {
+              pageReady = true;
+              DBG ("Soft Clip: UI sent uiReady");
+              sendStateToUi();
+          })
+          .withEventListener ("setParameter", [this] (const juce::var& event)
+          {
+              handleUiEvent (event);
+          }))
 {
     setSize (1024, 576);
     addAndMakeVisible (webView);
+
+    if (! juce::WebBrowserComponent::areOptionsSupported (makeWebViewOptions()))
+    {
+        juce::AlertWindow::showMessageBoxAsync (
+            juce::MessageBoxIconType::WarningIcon,
+            "Soft Clip - WebView2",
+            "JUCE could not use the WebView2 backend.\n\n"
+            "The browser may fall back to Internet Explorer.\n"
+            "Check the WebView2 runtime / loader installation.",
+            "OK");
+    }
 
 #if SOFTCLIP_UI_DEV_SERVER
     webView.goToURL (devUiUrl);
