@@ -1,0 +1,760 @@
+SOFT CLIP
+PROJECT BLUEPRINT
+Wadidaw Audio Tools
+
+============================================================
+1. PRODUCT IDENTITY
+============================================================
+
+Manufacturer / Brand:
+    Wadidaw Audio Tools
+
+Product:
+    Soft Clip
+
+Internal Product Category:
+    Drive
+        -> Clipping / Harmonic Processing
+
+VST3 Host Category:
+    Fx
+        -> Distortion
+
+Manufacturer Code:
+    Wdid
+
+Product Code:
+    SfCl
+
+Bundle ID:
+    com.wadidaw.audiotools.softclip
+
+Current Target Platform:
+    Windows
+
+Current Plugin Formats:
+    VST3
+    Standalone
+
+Future / Prepared:
+    VST2  -> prepared, OFF
+    AAX   -> later
+    AU    -> later
+    AUv3  -> later
+    LV2   -> later
+
+
+============================================================
+2. PROJECT LOCATION
+============================================================
+
+D:\ma-soft-clip
+
+
+============================================================
+3. PROJECT STRUCTURE
+============================================================
+
+D:\ma-soft-clip
+|
++-- CMakeLists.txt
++-- README.md
+|
++-- Assets
+|   +-- Fonts
+|   +-- Images
+|   +-- Presets
+|
++-- Source
+    |
+    +-- PluginProcessor.h
+    +-- PluginProcessor.cpp
+    |
+    +-- PluginEditor.h
+    +-- PluginEditor.cpp
+    |
+    +-- DSP
+    |   +-- SoftClip.h
+    |   +-- SoftClip.cpp
+    |   +-- Clipper.h
+    |   +-- Clipper.cpp
+    |   +-- Oversampling.h
+    |   +-- Oversampling.cpp
+    |
+    +-- Meter
+    |   +-- LevelMeter.h
+    |   +-- LevelMeter.cpp
+    |   +-- AnalogMeter.h
+    |   +-- AnalogMeter.cpp
+    |
+    +-- UI
+    |   +-- Knob.h
+    |   +-- Knob.cpp
+    |   +-- Switch.h
+    |   +-- Switch.cpp
+    |   +-- WaveformView.h
+    |   +-- WaveformView.cpp
+    |   +-- TransferCurve.h
+    |   +-- TransferCurve.cpp
+    |
+    +-- Utils
+        +-- AudioFifo.h
+        +-- DebugLogger.h
+        +-- ParameterHelpers.h
+
+build/
+    -> generated build files only
+
+
+============================================================
+4. CMAKE FORMAT CONFIGURATION
+============================================================
+
+Default formats:
+
+    VST3
+    Standalone
+
+VST2:
+
+    BUILD_VST2 OFF
+
+When VST2 is enabled:
+
+    juce_set_vst2_sdk_path("${VST2_SDK_PATH}")
+
+and:
+
+    VST
+
+is appended to the plugin formats.
+
+Example configuration:
+
+    set(BUILD_VST2 OFF)
+
+    set(PLUGIN_FORMATS
+        VST3
+        Standalone
+    )
+
+    if(BUILD_VST2)
+        juce_set_vst2_sdk_path("${VST2_SDK_PATH}")
+        list(APPEND PLUGIN_FORMATS VST)
+    endif()
+
+
+============================================================
+5. PLUGIN CMAKE IDENTITY
+============================================================
+
+juce_add_plugin(SoftClip
+
+    COMPANY_NAME "Wadidaw Audio Tools"
+
+    PRODUCT_NAME "Soft Clip"
+    PLUGIN_NAME "Soft Clip"
+
+    VERSION "0.1.0"
+
+    BUNDLE_ID
+        com.wadidaw.audiotools.softclip
+
+    PLUGIN_MANUFACTURER_CODE Wdid
+    PLUGIN_CODE SfCl
+
+    IS_SYNTH FALSE
+
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+
+    COPY_PLUGIN_AFTER_BUILD TRUE
+
+    FORMATS
+        ${PLUGIN_FORMATS}
+
+    VST3_CATEGORIES
+        "Fx Distortion"
+
+    DESCRIPTION
+        "Soft clipping and harmonic processing."
+)
+
+
+============================================================
+6. DSP ARCHITECTURE
+============================================================
+
+Audio processing path:
+
+    INPUT
+      |
+      v
+    Input Meter
+      |
+      v
+    Input Gain
+      |
+      v
+    Oversampling
+      |
+      v
+    Soft Clip
+      |
+      +----> Gain Reduction calculation
+      |
+      +----> Waveform data
+      |
+      v
+    Clipper
+      |
+      v
+    Output Gain
+      |
+      v
+    Downsampling
+      |
+      v
+    Output Meter
+      |
+      v
+    OUTPUT
+
+
+Important:
+
+- Audio processing runs on the audio thread.
+- GUI must NOT process audio.
+- GUI must NOT call repaint() from the audio thread.
+- GUI must NOT perform unsafe memory allocation in processBlock().
+- GUI reads monitoring data through safe shared state / atomics / FIFO.
+
+
+============================================================
+7. CORE PARAMETERS
+============================================================
+
+Input:
+
+    Input Gain
+        Range target: -12 dB to +12 dB
+
+Clip:
+
+    Threshold
+        Range target: -20 dB to 0 dB
+
+    Knee
+        Range target: 0% to 100%
+
+    Clip Style
+        Soft
+        Medium
+        Hard
+
+Output:
+
+    Output Gain
+        Range target: -12 dB to +12 dB
+
+Oversampling:
+
+    1x
+    2x
+    4x
+    8x
+
+Processing Modes:
+
+    ST
+    MS
+    MB
+
+Initial implementation:
+
+    ST only
+
+MS and MB must not be treated as fake UI modes.
+They will be implemented after the core stereo DSP is stable.
+
+
+============================================================
+8. PARAMETER FLOW
+============================================================
+
+Example: Threshold
+
+    Threshold parameter
+          |
+          +----> Soft Clip DSP
+          |
+          +----> Gain Reduction calculation
+          |
+          +----> UI threshold visualization
+          |
+          +----> Transfer curve
+
+Changing Threshold must produce real changes in:
+
+    DSP response
+    Gain Reduction
+    Waveform
+    Meter behavior
+    Transfer curve
+    Threshold visualization
+
+
+============================================================
+9. REALTIME MONITORING
+============================================================
+
+Audio Thread:
+
+    Input RMS
+    Input Peak
+    Output RMS
+    Output Peak
+    Current GR
+    Peak GR
+    Waveform samples
+
+        |
+        v
+
+Safe shared data / Atomic state / Audio FIFO
+
+        |
+        v
+
+GUI Timer
+    Target: 30-60 Hz
+
+        |
+        +----> Input Meter
+        +----> Output Meter
+        +----> GR Meter
+        +----> Analog Needle
+        +----> Peak Hold
+        +----> Waveform
+        +----> Transfer Curve
+
+Audio processing remains sample-accurate.
+GUI only visualizes the latest available data.
+
+
+============================================================
+10. METER SYSTEM
+============================================================
+
+Input:
+
+    RMS
+    Peak
+
+Gain Reduction:
+
+    Current GR
+    Peak GR
+
+Output:
+
+    RMS
+    Peak
+
+Analog meter behavior:
+
+    RMS -> main needle
+
+    Peak -> peak-hold needle
+
+Peak hold:
+
+    - immediate attack
+    - smooth decay
+
+Meter visuals should follow the approved hardware-inspired
+reference design.
+
+
+============================================================
+11. WAVEFORM MONITOR
+============================================================
+
+Realtime waveform monitoring must represent actual audio data.
+
+Possible visualization:
+
+    INPUT
+    waveform
+
+    OUTPUT
+    waveform
+
+or a combined processing visualization.
+
+Threshold visualization:
+
+    threshold line
+
+The threshold line moves with the Threshold parameter.
+
+Waveform data comes from the actual audio processing path.
+
+
+============================================================
+12. TRANSFER CURVE
+============================================================
+
+Realtime transfer curve.
+
+Axes:
+
+    X = Input
+    Y = Output
+
+The curve changes when:
+
+    Threshold changes
+    Knee changes
+    Clip Style changes
+    Processing mode changes
+
+Concept:
+
+    Soft:
+        smooth transition into clipping
+
+    Medium:
+        stronger transition
+
+    Hard:
+        sharper clipping behavior
+
+
+============================================================
+13. UI DESIGN DIRECTION
+============================================================
+
+Primary visual reference:
+    User-provided reference image.
+
+Design language:
+
+    Vintage hardware
+    Industrial
+    Analog instrumentation
+    Metal panel
+    Mechanical controls
+    Analog meter
+    Screw details
+    Recessed meter housing
+    Cream / off-white panel
+    Black hardware
+    Amber/orange indicators
+    Red reserved for peak/danger indication
+    Industrial typography
+
+Avoid:
+
+    Glassmorphism
+    SaaS dashboard aesthetic
+    RGB gaming aesthetic
+    Generic JUCE demo appearance
+    Excessive gradients
+    Decorative elements with no functional purpose
+
+
+============================================================
+14. UI LAYOUT CONCEPT
+============================================================
+
+------------------------------------------------------------
+|                         SOFT CLIP                       |
+------------------------------------------------------------
+|          |                              |               |
+|  INPUT   |        ANALOG METER          |    OUTPUT     |
+|  METER   |                              |    METER      |
+|          |                              |               |
+------------------------------------------------------------
+|          |                              |               |
+|THRESHOLD |          WAVEFORM            |  CLIP STYLE   |
+|   KNOB   |                              | SOFT MED HARD  |
+|          |                              |               |
+|   KNEE   |       TRANSFER CURVE         | OVERSAMPLING  |
+|   KNOB   |                              | 1x 2x 4x 8x   |
+|          |                              |               |
+------------------------------------------------------------
+|          |                              |               |
+|   GAIN   |          GR / PEAK           |    OUTPUT     |
+|          |                              |               |
+------------------------------------------------------------
+
+
+The exact layout will be refined during UI implementation
+while keeping the approved reference as the visual direction.
+
+
+============================================================
+15. STANDALONE MODE
+============================================================
+
+Standalone is the primary realtime development laboratory.
+
+It must support:
+
+    Audio input device
+    Audio output device
+    Sample rate
+    Buffer size
+    Realtime audio monitoring
+    Plugin GUI
+    Debug mode
+
+Expected signal flow:
+
+    Instrument / Playback
+          |
+          v
+    Audio Interface
+          |
+          v
+    Soft Clip Standalone
+          |
+          v
+    Headphones / Monitor
+
+
+Goal:
+
+    Test DSP without opening a DAW every time.
+
+
+============================================================
+16. DEBUG MODE
+============================================================
+
+Standalone should support:
+
+    SoftClip.exe --debug
+
+Debug console should display periodically, NOT every sample.
+
+Example:
+
+    ========================================
+               SOFT CLIP DEBUG
+    ========================================
+
+    AUDIO
+    Sample Rate : 48000 Hz
+    Buffer      : 256
+    Channels    : 2
+
+    INPUT
+    RMS         : -18.4 dBFS
+    Peak        : -3.2 dBFS
+
+    PROCESSING
+    Threshold   : -6.0 dB
+    Knee        : 50 %
+    Clip Style  : Soft
+    Oversample  : 4x
+
+    GAIN REDUCTION
+    Current     : 2.8 dB
+    Peak        : 5.1 dB
+
+    OUTPUT
+    RMS         : -17.9 dBFS
+    Peak        : -2.8 dBFS
+
+    CPU
+    Process     : 2.1 %
+
+Target debug refresh:
+
+    Approximately 500 ms to 1 second.
+
+
+============================================================
+17. DEVELOPMENT PHASES
+============================================================
+
+PHASE 1 - PROJECT FOUNDATION
+
+    CMake
+    JUCE
+    VST3
+    Standalone
+    VST2 preparation
+    Plugin identity
+
+
+PHASE 2 - AUDIO ENGINE
+
+    Audio I/O
+    processBlock()
+    Parameter system
+    Input
+    Output
+
+
+PHASE 3 - SOFT CLIP DSP
+
+    Threshold
+    Knee
+    Soft
+    Medium
+    Hard
+    Input Gain
+    Output Gain
+    Gain Reduction
+
+
+PHASE 4 - REALTIME MONITORING
+
+    RMS
+    Peak
+    Gain Reduction
+    Peak Hold
+    Waveform
+
+
+PHASE 5 - OVERSAMPLING
+
+    1x
+    2x
+    4x
+    8x
+
+
+PHASE 6 - VISUAL DSP
+
+    Transfer curve
+    Threshold visualization
+    GR visualization
+
+
+PHASE 7 - UI
+
+    Knobs
+    Meters
+    Switches
+    Panel
+    Typography
+    Hardware aesthetic
+
+
+PHASE 8 - TESTING
+
+    44.1 kHz
+    48 kHz
+    88.2 kHz
+    96 kHz
+    192 kHz
+
+    Mono
+    Stereo
+
+    Automation
+    Latency
+    CPU
+    Aliasing
+    Level matching
+
+
+PHASE 9 - DAW TESTING
+
+    Standalone
+    Cubase
+    VST3
+    Realtime testing
+
+
+PHASE 10 - RELEASE
+
+    Release build
+    VST3
+    Standalone
+    Installer
+    VST2 compatibility test
+
+
+============================================================
+18. BUILD TARGET
+============================================================
+
+Default:
+
+    cmake -S . -B build
+    cmake --build build --config Release
+
+Expected:
+
+    build
+    |
+    +-- SoftClip_artefacts
+        |
+        +-- Release
+            |
+            +-- VST3
+            |   +-- Soft Clip.vst3
+            |
+            +-- Standalone
+                +-- Soft Clip.exe
+
+
+VST2 remains disabled by default.
+
+When VST2 SDK is installed and configured:
+
+    cmake -S . -B build -DBUILD_VST2=ON
+
+Then VST2 becomes an additional build target.
+
+
+============================================================
+19. ARCHITECTURE PRINCIPLE
+============================================================
+
+Manufacturer:
+
+    Wadidaw Audio Tools
+
+        |
+        v
+
+Product:
+
+    Soft Clip
+
+        |
+        +-----------------------+
+        |                       |
+        v                       v
+    Standalone                 VST3
+        |                       |
+        +-----------+-----------+
+                    |
+                    v
+              SAME DSP CODE
+                    |
+        +-----------+-----------+
+        |           |           |
+        v           v           v
+      Meter      Waveform   Transfer Curve
+        |           |           |
+        +-----------+-----------+
+                    |
+                    v
+               REALTIME UI
+
+
+Core principle:
+
+    One DSP engine.
+    Multiple plugin formats.
+    One product identity.
+    Realtime monitoring.
+    UI reflects actual DSP state.

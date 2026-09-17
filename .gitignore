@@ -1,0 +1,11 @@
+build/
+.vs/
+.vscode/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+Debug/
+Release/
+x64/
+JUCE/
