@@ -4,11 +4,28 @@
 #include "Oversampling.h"
 #include <vector>
 
+enum class ProcessingMode
+{
+    Stereo = 0,
+    MidSide,
+    Multiband
+};
+
+enum class SignalSelect
+{
+    Input = 0,
+    GR,
+    Output
+};
+
 class SoftClipDSP
 {
+
 public:
     SoftClipDSP() = default;
 
+    void setMode(ProcessingMode newMode);
+    void setSignalSelect(SignalSelect newSelect);
     void prepare(double sampleRate, int samplesPerBlock, int numChannels);
     void reset();
 

@@ -13,6 +13,7 @@ namespace IDs
     static const juce::String mode        = "mode";
     static const juce::String bypass      = "bypass";
     static const juce::String signalSel   = "signal_select";
+    static const juce::String signalSelect = "signal_select";
 }
 
 class ParameterHelpers
