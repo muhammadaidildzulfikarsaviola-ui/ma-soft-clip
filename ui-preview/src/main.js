@@ -49,8 +49,18 @@ function updateMultiToggle(selector, value, max) {
   el.querySelector('span').style.left = `${x}px`
 }
 
+function updateSignalToggle(value) {
+  const el = $('signalSwitch')
+  if (!el) return
+  const track = Math.max(0, el.clientHeight - 18)
+  const y = (Math.max(0, Math.min(2, value)) / 2) * track
+  el.querySelector('span').style.left = '50%'
+  el.querySelector('span').style.top = `${4 + y}px`
+}
+
 const meterScale = ['+3', '0', '-5', '-10', '-20']
 const meterCountForSignal = () => state.signal === 1 ? (state.mode === 2 ? 3 : state.mode === 1 ? 2 : 1) : 1
+let meterSignature = ''
 
 function buildVUMeters() {
   const container = $('vuMeters')
@@ -58,6 +68,9 @@ function buildVUMeters() {
   const labels = state.signal === 1
     ? (state.mode === 2 ? ['LOW', 'MID', 'HIGH'] : state.mode === 1 ? ['MID', 'SIDE'] : ['GR'])
     : [state.signal === 0 ? 'INPUT' : 'OUTPUT']
+  const signature = `${state.signal}:${state.mode}:${count}:${labels.join('|')}`
+  if (signature === meterSignature) return
+  meterSignature = signature
   container.innerHTML = Array.from({ length: count }, (_, index) => `
     <div class="vu-meter" data-index="${index}">
       <div class="vu-scale">${meterScale.map(v => `<span>${v}</span>`).join('')}</div>
@@ -82,7 +95,6 @@ function valueForMeter(index) {
 
 function renderVUMeters() {
   const count = meterCountForSignal()
-  if ($('vuMeters').children.length !== count) buildVUMeters()
   for (let i = 0; i < count; i++) {
     const value = valueForMeter(i)
     const db = Math.max(-20, Math.min(3, value))
@@ -115,15 +127,15 @@ function render() {
   $('inputReadout').firstChild.textContent = `${state.inputDb.toFixed(1)} dB`
   $('outputReadout').firstChild.textContent = `${state.outputDb.toFixed(1)} dB`
 
-  const value = state.grDb <= -0.01 ? state.grDb : 0
-  $('grValue').textContent = `${value.toFixed(1)} dB`
+  const displayValue = state.signal === 0 ? state.inputDb : state.signal === 2 ? state.outputDb : state.grDb
+  $('grValue').textContent = `${displayValue.toFixed(1)} dB`
   buildVUMeters()
   renderVUMeters()
 
   updateMultiToggle('[data-key="style"]', state.style, 2)
   updateMultiToggle('[data-key="mode"]', state.mode, 2)
   updateMultiToggle('[data-key="oversampling"]', state.oversampling, 3)
-  updateMultiToggle('#signalSwitch', state.signal, 2)
+  updateSignalToggle(state.signal)
 }
 
 function setParameter(id, value) { emitNative('setParameter', { id, value }) }
