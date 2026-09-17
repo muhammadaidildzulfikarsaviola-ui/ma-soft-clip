@@ -6,6 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ============================================================
+# UI DEVELOPMENT MODE
+# ============================================================
+# When ON, the plugin UI is loaded from the Vite dev server so
+# HTML/CSS/JS changes appear immediately through WebView2/HMR.
+# Set OFF for the future release build with embedded UI assets.
+option(SOFTCLIP_UI_DEV_SERVER "Load plugin UI from Vite localhost dev server" ON)
+
+# ============================================================
 # JUCE SETUP
 # ============================================================
 set(JUCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/JUCE" CACHE PATH "Path to JUCE")
@@ -57,6 +65,7 @@ juce_add_plugin(SoftClip
     FORMATS ${PLUGIN_FORMATS}
     COPY_PLUGIN_AFTER_BUILD TRUE
     VST3_CAN_REPLACE_VST2 FALSE
+    NEEDS_WEBVIEW2 TRUE
 )
 
 # JUCE's CMake API expects project source files to be attached with
@@ -81,6 +90,7 @@ target_include_directories(SoftClip PRIVATE
 target_link_libraries(SoftClip PRIVATE
     juce::juce_audio_utils
     juce::juce_dsp
+    juce::juce_gui_extra
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
@@ -88,4 +98,7 @@ target_link_libraries(SoftClip PRIVATE
 
 target_compile_definitions(SoftClip PRIVATE
     JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+    JUCE_WEB_BROWSER=1
+    JUCE_USE_WIN_WEBVIEW2=1
+    SOFTCLIP_UI_DEV_SERVER=$<BOOL:${SOFTCLIP_UI_DEV_SERVER}>
 )
