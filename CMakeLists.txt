@@ -56,17 +56,19 @@ juce_add_plugin(SoftClip
 
     FORMATS ${PLUGIN_FORMATS}
     COPY_PLUGIN_AFTER_BUILD TRUE
-
     VST3_CAN_REPLACE_VST2 FALSE
+)
 
-    SOURCES
-        Source/PluginProcessor.cpp
-        Source/PluginEditor.cpp
-        Source/DSP/SoftClip.cpp
-        Source/DSP/Clipper.cpp
-        Source/DSP/Oversampling.cpp
-        Source/Meter/LevelMeter.cpp
-        Source/Meter/AnalogMeter.cpp
+# JUCE's CMake API expects project source files to be attached with
+# target_sources(), not as a SOURCES argument to juce_add_plugin().
+target_sources(SoftClip PRIVATE
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+    Source/DSP/SoftClip.cpp
+    Source/DSP/Clipper.cpp
+    Source/DSP/Oversampling.cpp
+    Source/Meter/LevelMeter.cpp
+    Source/Meter/AnalogMeter.cpp
 )
 
 target_include_directories(SoftClip PRIVATE
