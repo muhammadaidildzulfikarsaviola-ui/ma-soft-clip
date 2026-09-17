@@ -158,11 +158,11 @@ void SoftClipAudioProcessorEditor::paint (juce::Graphics& g)
     };
 
     // Sub-panel Laying out
-    drawSectionBox (juce::Rectangle<float> (16, 60, 210, 380));   // Metering Left
-    drawSectionBox (juce::Rectangle<float> (236, 60, 540, 480));  // Center Main Controls
-    drawSectionBox (juce::Rectangle<float> (786, 60, 222, 480));  // Right Switches Section
-    drawSectionBox (juce::Rectangle<float> (16, 450, 210, 90));   // Bottom Left Clipper Toggle
-
+    drawSectionBox (juce::Rectangle<float> (16.0f, 60.0f, 210.0f, 380.0f));  // Metering Left
+    drawSectionBox (juce::Rectangle<float> (236.0f, 60.0f, 540.0f, 480.0f)); // Center Main Controls
+    drawSectionBox (juce::Rectangle<float> (786.0f, 60.0f, 222.0f, 480.0f)); // Right Switches Section
+    drawSectionBox (juce::Rectangle<float> (16.0f, 450.0f, 210.0f, 90.0f));  // Bottom Left Clipper Toggle
+    
     // Sekrup Sudut Sasis Utama
     IndustrialStyle::drawScrew (g, 12, 12, 12.0f, 0.3f);
     IndustrialStyle::drawScrew (g, getWidth() - 12, 12, 12.0f, 1.1f);

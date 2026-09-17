@@ -11,7 +11,7 @@ SoftClipAudioProcessor::SoftClipAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        ),
-       apvts (*this, nullptr, "Parameters", ParameterHelpers::createParameterLayout())
+        apvts (*this, nullptr, "Parameters", ParameterHelpers::createParameterLayout())
 #endif
 {
     // Caching 9 dari 9 parameter APVTS secara lengkap
@@ -85,8 +85,6 @@ void SoftClipAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     softClipDSP.setMode (static_cast<ProcessingMode>(static_cast<int>(modeParam->load())));
     softClipDSP.setSignalSelect (static_cast<SignalSelect>(static_cast<int>(signalSelectParam->load())));
     softClipDSP.setBypass (bypassParam->load() > 0.5f);
-    softClipDSP.setMode(static_cast<ProcessingMode>(static_cast<int>(modeParam->load())));
-    softClipDSP.setSignalSelect(static_cast<SignalSelect>(static_cast<int>(signalSelectParam->load())));
 
     setLatencySamples (juce::roundToInt (softClipDSP.getLatencyInSamples()));
 
@@ -169,6 +167,8 @@ void SoftClipAudioProcessor::setStateInformation (const void* data, int sizeInBy
             apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
 
+//==============================================================================
+// Function factory untuk instansiasi plugin oleh JUCE
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new SoftClipAudioProcessor();

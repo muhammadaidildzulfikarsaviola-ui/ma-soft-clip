@@ -56,7 +56,13 @@ void SoftClipDSP::setBypass(bool isBypassed) noexcept
 {
     bypassed = isBypassed;
 }
+void SoftClipDSP::setSignalSelect(SignalSelect newSelect)
+{
+}
 
+void SoftClipDSP::setMode(ProcessingMode newMode)
+{
+}
 void SoftClipDSP::process(juce::AudioBuffer<float>& buffer, float& outMaxGainReductionDb) noexcept
 {
     outMaxGainReductionDb = 0.0f;
@@ -72,22 +78,17 @@ void SoftClipDSP::process(juce::AudioBuffer<float>& buffer, float& outMaxGainRed
 
     if (bypassed)
     {
-        // Apply Output Gain & Exit early if bypassed
         if (std::abs(outputGainLinear - 1.0f) > 0.0001f)
             buffer.applyGain(outputGainLinear);
         return;
     }
 
-    // 2. Oversampling Up
-    juce::dsp::AudioBlock<float> block(buffer);
-// 2. Oversampling Up
     juce::dsp::AudioBlock<float> block(buffer);
     auto oversampledBlock = oversamplingEngine.processSamplesUp(block);
 
     const int oversampledNumSamples = static_cast<int>(oversampledBlock.getNumSamples());
     float maxGrInBlock = 0.0f;
 
-    // 3. Process Clipping per channel
     for (int ch = 0; ch < numChannels; ++ch)
     {
         float* channelData = oversampledBlock.getChannelPointer(static_cast<size_t>(ch));
